@@ -1,7 +1,5 @@
 <template>
-    <div class="bg">
-        <router-view />
-    </div>
+    <router-view />
 </template>
 <script>
 
@@ -11,8 +9,12 @@ export default {
 </script>
 
 <style>
-body {
-    background-color: rgba(0, 0, 0, 0);
-    margin: 0px auto;
-    overflow: hidden;
-}</style>
+
+@font-face {
+  font-family: '文道芋圆丸子体';
+  src: url('/public/文道芋圆丸子体.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+</style>

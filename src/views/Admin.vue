@@ -3,11 +3,9 @@
         <a-layout-sider>
             <a-menu mode="inline" v-model:selectedKeys="current" @select="handleMenuSelect">
                 <a-menu-item key="1">
-                    <a-icon type="edit" />
                     <span>编辑</span>
                 </a-menu-item>
                 <a-menu-item key="2">
-                    <a-icon type="setting" />
                     <span>设置</span>
                 </a-menu-item>
             </a-menu>
@@ -21,12 +19,14 @@
 <script>
 import { Layout } from 'ant-design-vue';
 import SongEditor from '../components/SongEditor.vue';
+import SongsSetting  from "../components/SongsSetting.vue";
 import { ref } from "vue";
 export default {
     name: 'AdminMain',
     components: {
         'a-layout': Layout,
         SongEditor,
+        SongsSetting
     },
     data() {
         return {
@@ -36,11 +36,10 @@ export default {
     },
     methods: {
         handleMenuSelect({ key }) {
-            console.log("key is", key)
             if (key === '1') {
                 this.selectedTab = 'SongEditor'; // 切换到歌曲列表页签
             } else if (key === '2') {
-                this.selectedTab = 'Settings'; // 切换到设置页签
+                this.selectedTab = 'SongsSetting'; // 切换到设置页签
             }
         },
     },

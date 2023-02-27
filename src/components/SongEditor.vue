@@ -1,5 +1,5 @@
 <template>
-    <a-table :dataSource="dataSource" :columns="columns"  :locale="{ emptyText: '还没有人点歌哦' }">
+    <a-table :dataSource="dataSource" :columns="columns" :locale="{ emptyText: '还没有人点歌哦' }">
         <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'action'">
                 <a-button type="danger" size="medium" @click="deleteSong(record)">
@@ -7,6 +7,7 @@
             </template>
         </template>
     </a-table>
+    <a-button type="primary" size="medium" @click="switchStatus">{{ status === 1 ? '关闭点歌' : '开启点歌' }}</a-button>
 </template>
   
 <script>
@@ -14,23 +15,7 @@ import { message } from 'ant-design-vue';
 import { ref } from "vue";
 export default {
     methods: {
-        fetchSongData() {
-            fetch("http://localhost:4220/songs")
-                .then((response) => response.json())
-                .then((data) => {
-                    this.dataSource = data.data.map((item, index) => {
-                        return {
-                            ...item,
-                            index: index + 1,
-                        };
-                    });
-                })
-                .catch((error) => {
-                    console.log(error);
-                });
-        },
         deleteSong(record) {
-            console.log(record.number);
             fetch('http://localhost:4220/songs/del', {
                 method: 'POST',
                 headers: {
@@ -40,11 +25,9 @@ export default {
             })
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log(data);
                     if (data.ok === 1) {
                         message.success('删除成功');
-                        // 重新获取歌曲数据
-                        this.fetchSongData();
+
                     } else {
                         message.error(data.msg);
                     }
@@ -53,16 +36,60 @@ export default {
                     console.log(error);
                     message.error('删除失败');
                 });
+
+        },
+        switchStatus() {
+            fetch('http://localhost:4220/songs/switch')
+                .then((response) => response.json())
+                .then((data) => {
+                    this.status = data.status
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
         }
     },
     mounted() {
-        this.fetchSongData(); // 初始化页面数据
-        setInterval(() => {
-            this.fetchSongData(); // 每隔1秒获取最新的歌曲数据
-        }, 1000);
+        this.ws = new WebSocket('ws://localhost:4220/songs/ws');
+        this.ws.addEventListener('open', event => {
+            console.log('WebSocket connected', event);
+            this.ws.send("sync_songs")
+        });
+        this.ws.onmessage = event => {
+            const regex = /^(\w+)\s+({.*})$/;
+            const match = event.data.match(regex);
+            if (!match) {
+                return
+            }
+            const opcode = match[1];
+            const payload = JSON.parse(match[2]);
+            console.log(`Received ${opcode}:`, payload);
+            if (opcode == "sync_songs") {
+                this.dataSource = payload.data.map((item, index) => {
+                    return {
+                        ...item,
+                        index: index + 1,
+                    };
+                });
+                this.status = payload.status
+            } else if (opcode == "send_msg") {
+                if (payload.ok == 1) {
+                    message.success(payload.msg)
+                } else {
+                    message.error(payload.msg)
+                }
+            }
+        }
+    },
+    beforeUnmount() {
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
     },
     setup() {
         const dataSource = ref([]);
+        const status = ref(1)
         const columns = [
             {
                 title: "序号",
@@ -88,6 +115,7 @@ export default {
         return {
             dataSource,
             columns,
+            status
         };
     }
 }

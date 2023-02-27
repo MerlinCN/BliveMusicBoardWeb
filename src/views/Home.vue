@@ -1,9 +1,15 @@
 
 <template>
-    <div class ="song-list-container" >
-        <SongList />
-    </div>
+    <SongList />
 </template>
+
+
+<style>
+body {
+    background-color: transparent;
+}
+</style>
+
 
 <script>
 
